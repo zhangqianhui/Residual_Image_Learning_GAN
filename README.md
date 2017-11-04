@@ -33,7 +33,7 @@ The man face:
 
 The residual face:
 
-![](imgsm_r.png)
+![](img/m_r.png)
 
 Man-to-Woman Face:
 
@@ -43,7 +43,7 @@ Man-to-Woman Face:
 
 The woman face:
 
-![](imgs/wm.png)
+![](imgs/wo.png)
 
 The residual face:
 

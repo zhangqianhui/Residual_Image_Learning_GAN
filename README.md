@@ -12,14 +12,14 @@ Tensorflow Implement of Paper [Learning Residual Images for Face Attribute Manip
 ## Datasets
 We use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) datasets and crop images to 64x64.
 
----------------------------------------------
-The training data folder should look like : 
-<train_data_root>
-                |--image1
-                |--image2
-                |--image3
-                |--image4...
----------------------------------------------
+  ---------------------------------------------
+  The training data folder should look like : 
+  <train_data_root>
+                  |--image1
+                  |--image2
+                  |--image3
+                  |--image4...
+  ---------------------------------------------
 
 ## Running
 

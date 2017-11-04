@@ -84,34 +84,16 @@ def read_image_list(category):
 
     return filenames
 
-def read_all_image_list(category):
-
-    filenames = []
-    print("list file")
-    list = os.walk(category)
-    for file in list:
-        for img in file[2]:
-            if 'jpg' in img:
-                filenames.append(file[0] + "/" + img)
-    print("list file ending!")
-
-    length = len(filenames)
-    perm = np.arange(length)
-    np.random.shuffle(perm)
-    filenames = np.array(filenames)
-    filenames = filenames[perm]
-
-    return filenames
-
 class CelebA(object):
 
-    def __init__(self):
+    def __init__(self, images_path):
 
         self.dataname = "CelebA"
         self.dims = 64*64
         self.shape = [64, 64, 3]
         self.image_size = 64
         self.channel = 3
+        self.images_path = images_path
         self.dom_1_train_data_list, self.dom_1_train_lab_list, self.dom_2_train_data_list, self.dom_2_train_lab_list = self.load_celebA()
 
         self.train_len = 0
@@ -125,13 +107,12 @@ class CelebA(object):
     def load_celebA(self):
 
         # get the list of image path
-        return read_image_list_file('/home/jichao/data/', is_test=False)
-
+        return read_image_list_file(self.images_path, is_test=False)
 
     def load_test_celebA(self):
 
         # get the list of image path
-        return read_image_list_file('/home/jichao/data/', is_test=True)
+        return read_image_list_file(self.images_path, is_test=True)
 
     def getShapeForData(self, filenames):
 

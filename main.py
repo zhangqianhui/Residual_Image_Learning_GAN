@@ -1,44 +1,218 @@
-import tensorflow as tf
-from utils import mkdir_p
-from utils import CelebA
-from ReImageGAN import reImageGAN
+import os
+import errno
+import numpy as np
+import scipy
+import scipy.misc
 
-flags = tf.app.flags
-flags.DEFINE_integer("OPER_FLAG", 0, "the flag of opertion")
-flags.DEFINE_string("OPER_NAME", "RIGAN_new3_regu_fp", "the name of opertion")
-FLAGS = flags.FLAGS
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
-if __name__ == "__main__":
+def get_image(image_path , image_size , is_crop=True, resize_w = 64 , is_grayscale = False):
+    return transform(imread(image_path , is_grayscale), image_size, is_crop , resize_w)
 
-    root_log_dir = "./ganceleba_log/logs{}".format(FLAGS.OPER_FLAG)
-    semigan_checkpoint_dir = "./model_gan{}/model.ckpt".format(FLAGS.OPER_NAME)
-    sample_path = "./ganceleba_sample/sample{}/sample_{}".format(FLAGS.OPER_FLAG, FLAGS.OPER_NAME)
+def transform(image, npx = 64 , is_crop=False, resize_w=64):
+    # npx : # of pixels width/height of image
+    if is_crop:
+        cropped_image = center_crop(image , npx , resize_w = resize_w)
+    else:
+        cropped_image = image
+        cropped_image = scipy.misc.imresize(cropped_image ,
+                            [resize_w , resize_w])
+    return np.array(cropped_image)/127.5 - 1
 
-    mkdir_p(root_log_dir)
-    mkdir_p(semigan_checkpoint_dir)
-    mkdir_p(sample_path)
-    model_path = semigan_checkpoint_dir
+def center_crop(x, crop_h , crop_w=None, resize_w=64):
 
-    batch_size = 64
-    max_iters = 40000
-    sample_size = 128
-    learn_rate = 0.0002
+    if crop_w is None:
+        crop_w = crop_h
+    h, w = x.shape[:2]
+    j = int(round((h - crop_h)/2.))
+    i = int(round((w - crop_w)/2.))
 
-    OPER_FLAG = FLAGS.OPER_FLAG
-    data_format = 'NHWC'
+    # return scipy.misc.imresize(x[j:j+crop_h, i:i+crop_w],
+    #                            [resize_w, resize_w])
+    return scipy.misc.imresize(x[40:218-30, 15: 178-15], [resize_w, resize_w])
 
-    m_ob = CelebA()
+def save_images(images, size, image_path):
+    return imsave(inverse_transform(images), size, image_path)
 
-    print "dom1_train_data_list", len(m_ob.dom_1_train_data_list)
-    print "dom2_train_data_list", len(m_ob.dom_2_train_data_list)
-    print "the number of train data", len(m_ob.dom_1_train_data_list + m_ob.dom_2_train_data_list)
+def imread(path, is_grayscale=False):
 
-    reGAN = reImageGAN(batch_size=batch_size, max_iters=max_iters,
-                      model_path= model_path, data_ob=m_ob, sample_size= sample_size,
-                      sample_path =sample_path , log_dir= root_log_dir , learning_rate= learn_rate, data_format=data_format)
+    if (is_grayscale):
+        return scipy.misc.imread(path, flatten=True).astype(np.float)
+    else:
+        return scipy.misc.imread(path).astype(np.float)
 
-    if OPER_FLAG == 0:
+def imsave(images, size, path):
+    return scipy.misc.imsave(path, merge(images, size))
 
-        reGAN.build_model_reImageGAN()
-        reGAN.train()
+def merge(images, size):
+
+    h, w = images.shape[1], images.shape[2]
+    img = np.zeros((h * size[0], w * size[1], 3))
+    for idx, image in enumerate(images):
+        i = idx % size[1]
+        j = idx // size[1]
+        img[j * h:j * h + h, i * w: i * w + w, :] = image
+
+    return img
+
+def inverse_transform(image):
+    return ((image + 1)* 127.5).astype('int32')
+
+def read_image_list(category):
+
+    filenames = []
+    print("list file")
+    list = os.listdir(category)
+    list.sort()
+    for file in list:
+        if 'jpg' or 'png' in file:
+            filenames.append(category + "/" + file)
+    print("list file ending!")
+
+    length = len(filenames)
+    perm = np.arange(length)
+    np.random.shuffle(perm)
+    filenames = np.array(filenames)
+    filenames = filenames[perm]
+
+    return filenames
+
+class CelebA(object):
+
+    def __init__(self, images_path):
+
+        self.dataname = "CelebA"
+        self.dims = 64*64
+        self.shape = [64, 64, 3]
+        self.image_size = 64
+        self.channel = 3
+        self.images_path = images_path
+        self.dom_1_train_data_list, self.dom_1_train_lab_list, self.dom_2_train_data_list, self.dom_2_train_lab_list = self.load_celebA()
+
+        self.train_len = 0
+
+        if len(self.dom_1_train_data_list) > len(self.dom_2_train_data_list):
+
+            self.train_len = len(self.dom_2_train_data_list)
+        else:
+            self.train_len = len(self.dom_1_train_data_list)
+
+    def load_celebA(self):
+
+        # get the list of image path
+        return read_image_list_file(self.images_path, is_test=False)
+
+    def load_test_celebA(self):
+
+        # get the list of image path
+        return read_image_list_file(self.images_path, is_test=True)
+
+    def getShapeForData(self, filenames):
+
+        array = [get_image(batch_file, 108, is_crop=True, resize_w = 64,
+                           is_grayscale=False) for batch_file in filenames]
+        sample_images = np.array(array)
+
+        return sample_images
+
+    def getNextBatch(self, batch_num=0, batch_size=64):
+
+        ro_num = self.train_len / 64
+
+        if batch_num % ro_num == 0:
+
+            perm = np.arange(self.train_len)
+            np.random.shuffle(perm)
+
+            self.dom_1_train_data_list = np.array(self.dom_1_train_data_list)
+            self.dom_1_train_data_list = self.dom_1_train_data_list[perm]
+            self.dom_2_train_data_list = np.array(self.dom_2_train_data_list)
+            self.dom_2_train_data_list = self.dom_2_train_data_list[perm]
+
+            self.dom_1_train_lab_list = np.array(self.dom_1_train_lab_list)
+            self.dom_1_train_lab_list = self.dom_1_train_lab_list[perm]
+
+            self.dom_2_train_lab_list = np.array(self.dom_2_train_lab_list)
+            self.dom_2_train_lab_list = self.dom_2_train_lab_list[perm]
+
+        return self.dom_1_train_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
+               self.dom_1_train_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
+               self.dom_2_train_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
+               self.dom_2_train_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size]
+
+    def getTestNextBatch(self, batch_num=0, batch_size=64):
+
+        ro_num = len(self.test_data_list) / batch_size
+        if batch_num % ro_num == 0:
+
+            length = len(self.test_data_list)
+            perm = np.arange(length)
+            np.random.shuffle(perm)
+            self.test_data_list = np.array(self.test_data_list)
+            self.test_data_list = self.test_data_list[perm]
+            self.test_lab_list = np.array(self.test_lab_list)
+            self.test_lab_list = self.test_lab_list[perm]
+
+        return self.test_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
+               self.test_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size]
+
+def read_image_list_file(category, is_test):
+
+    end_num = 0
+    if is_test == False:
+        
+        start_num = 1202
+        path = category + "celebA/"
+
+    else:
+
+        start_num = 4
+        path = category + "celeba_test/"
+        end_num = 1202
+
+    dom_1_list_image = []
+    dom_1_list_label = []
+
+    dom_2_list_image = []
+    dom_2_list_label = []
+
+    lines = open(category + "list_attr_celeba.txt")
+    li_num = 0
+    for line in lines:
+
+        if li_num < start_num:
+            li_num += 1
+            continue
+
+        if li_num >= end_num and is_test == True:
+            break
+
+        flag = line.split('1 ', 41)[20]  # get the label for gender
+        file_name = line.split(' ', 1)[0]
+
+        # print flag
+        if flag == ' ':
+
+            dom_1_list_image.append(path + file_name)
+            dom_1_list_label.append(1)
+            
+        else:
+            
+            dom_2_list_image.append(path + file_name)
+            dom_2_list_label.append(0)
+
+        li_num += 1
+
+    lines.close()
+
+    return dom_1_list_image, dom_1_list_label, dom_2_list_image, dom_2_list_label
+
+
 

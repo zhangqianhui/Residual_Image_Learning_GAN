@@ -28,15 +28,32 @@ The training data folder should look like :
 ## Experiments
 
 The man face:
+
 ![](imgs/m.png)
 
 The residual face:
+
 ![](imgsm_r.png)
 
 Man-to-Woman Face:
+
 ![](imgs/m_wm.png)
 
-The restruction image:
+--------------------
+
+The woman face:
+
+![](imgs/wm.png)
+
+The residual face:
+
+![](imgs/wm_r.png)
+
+Woman-to-Man Face:
+
+![](imgs/wm_m.png)
+
+
 
 ## Acknowledgement
 + [DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow)

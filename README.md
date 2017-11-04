@@ -25,7 +25,7 @@ The training data folder should look like :
 
 ## Running
 
-  $ python main.py --IMAGE_PATH /home/?/data/celebA/
+    $ python main.py --IMAGE_PATH /home/?/data/celebA/
  
 ## Experiments
 

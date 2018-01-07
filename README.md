@@ -45,11 +45,11 @@ Man-to-Woman Face:
 
 The woman face:
 
-![](imgs/wo.png)
+![](imgs/wm.png)
 
 The residual face:
 
-![](imgs/w_r.png)
+![](imgs/wm_r.png)
 
 Woman-to-Man Face:
 

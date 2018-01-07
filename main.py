@@ -1,46 +1,44 @@
 import tensorflow as tf
 from utils import mkdir_p
 from utils import CelebA
-from ReImageGAN import reImageGAN
+from ResidualGAN import reImageGAN
 
 flags = tf.app.flags
-flags.DEFINE_integer("OPER_FLAG", 0, "the flag of opertion")
-flags.DEFINE_string("OPER_NAME", "RIGAN_new3_regu_fp", "the name of opertion")
-flags.DEFINE_string("IMAGE_PATH", "/home/haha/data/celebA", "the path of your celebA")
+flags.DEFINE_integer("OPER_FLAG", 0, "Train or Test")
+flags.DEFINE_string("OPER_NAME", "1_6_2", "the name of opertionby the current time")
+flags.DEFINE_string("IMAGE_PATH", "/home/xx/data/celebA/", "the path of your celebA, don't contain other sub-directory")
+flags.DEFINE_integer("BATCH_SIZE", 16, "the batch_size")
+flags.DEFINE_integer("IMG_SIZE", 128, "the size of training samples")
+flags.DEFINE_integer("MAX_ITERS", 50000, "the maxization of iterations")
+flags.DEFINE_integer("LEARN_RATE", 0.0001, "the learning rate")
+flags.DEFINE_integer("L1_W", 0.00005, "weight of L1 norm")
+flags.DEFINE_integer("PER_W", 0.000005, "weight of perception loss")
 FLAGS = flags.FLAGS
 
+#1 : 128sx128
 if __name__ == "__main__":
 
-    root_log_dir = "./ganceleba_log/logs{}".format(FLAGS.OPER_FLAG)
-    semigan_checkpoint_dir = "./model_gan{}/model.ckpt".format(FLAGS.OPER_NAME)
-    sample_path = "./ganceleba_sample/sample{}/sample_{}".format(FLAGS.OPER_FLAG, FLAGS.OPER_NAME)
+    root_log_dir = "./output/logs/logs{}".format(FLAGS.OPER_FLAG)
+    gan_checkpoint_dir = "./output/model_gan/{}_model.ckpt".format(FLAGS.OPER_FLAG)
+    sample_path = "./output/sample{}/sample_{}".format(FLAGS.OPER_NAME, FLAGS.OPER_FLAG)
 
     mkdir_p(root_log_dir)
-    mkdir_p(semigan_checkpoint_dir)
+    mkdir_p(gan_checkpoint_dir)
     mkdir_p(sample_path)
-    model_path = semigan_checkpoint_dir
+    model_path = gan_checkpoint_dir
 
-    batch_size = 64
-    max_iters = 40000
-    sample_size = 128
-    learn_rate = 0.0002
-
-    OPER_FLAG = FLAGS.OPER_FLAG
-    data_format = 'NHWC'
-
-    m_ob = CelebA(FLAGS.IMAGE_PATH)
+    m_ob = CelebA(FLAGS.IMAGE_PATH, FLAGS.IMG_SIZE)
 
     print "dom1_train_data_list", len(m_ob.dom_1_train_data_list)
     print "dom2_train_data_list", len(m_ob.dom_2_train_data_list)
     print "the number of train data", len(m_ob.dom_1_train_data_list + m_ob.dom_2_train_data_list)
 
-    reGAN = reImageGAN(batch_size=batch_size, max_iters=max_iters,
-                      model_path= model_path, data_ob=m_ob, sample_size= sample_size,
-                      sample_path =sample_path , log_dir= root_log_dir , learning_rate= learn_rate, data_format=data_format)
+    reGAN = reImageGAN(batch_size=FLAGS.BATCH_SIZE, max_iters=FLAGS.MAX_ITERS,
+                      model_path= model_path, data_ob=m_ob,
+                      sample_path =sample_path , log_dir=root_log_dir , learning_rate= FLAGS.LEARN_RATE, l1_w=FLAGS.L1_W, per_w=FLAGS.PER_W)
 
-    if OPER_FLAG == 0:
+    if FLAGS.OPER_FLAG == 0:
 
         reGAN.build_model_reImageGAN()
         reGAN.train()
-
 

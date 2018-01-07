@@ -1,5 +1,5 @@
 # Residual_Image_Learning_GAN
-Tensorflow Implement of Paper [Learning Residual Images for Face Attribute Manipulation](https://arxiv.org/abs/1612.05363), which has been accepted in CVPR 2017. We need write this code and compare our results with that, because the author don't public their code. I think this paper is a good paper and they give a perfect idea for facial visual manipulating with images residual learning.
+Tensorflow Implement of Paper [Learning Residual Images for Face Attribute Manipulation](https://arxiv.org/abs/1612.05363), which has been accepted in CVPR 2017. We need write this code and compare our results with that, because the author don't public their code. I think this paper is a good paper and they give a perfect idea for facial visual manipulating with images residual learning. This difference with original paper is that this implements use Instance_norm instead of batch_normal. You can adjust important weights for more perfect results. When bugs have been founded by you, thanks for your contributions and PR. 
 
 ![image](imgs/paper_caption.PNG)
 
@@ -10,7 +10,7 @@ Tensorflow Implement of Paper [Learning Residual Images for Face Attribute Manip
 
 
 ## Datasets
-We use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) datasets and crop images to 64x64.
+We use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) datasets. The code will crop and resize images to 128x128.
 
 ~~~
 ---------------------------------------------

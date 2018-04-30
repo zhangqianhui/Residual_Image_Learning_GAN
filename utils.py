@@ -96,7 +96,7 @@ def read_image_list(category):
 
 class CelebA(object):
 
-    def __init__(self, images_path, image_size):
+    def __init__(self, images_path, image_size, attri_id):
 
         self.dataname = "CelebA"
         self.dims = image_size*image_size
@@ -104,25 +104,19 @@ class CelebA(object):
         self.image_size = image_size
         self.channel = 3
         self.images_path = images_path
-        self.dom_1_train_data_list, self.dom_1_train_lab_list, self.dom_2_train_data_list, self.dom_2_train_lab_list = self.load_celebA()
-
-        self.train_len = 0
-
-        if len(self.dom_1_train_data_list) > len(self.dom_2_train_data_list):
-
-            self.train_len = len(self.dom_2_train_data_list)
-        else:
-            self.train_len = len(self.dom_1_train_data_list)
+        self.attri_id = attri_id
+        self.dom_1_train_data_list, self.dom_2_train_data_list = self.load_celebA()
+        self.train_len = len(self.dom_1_train_data_list)
 
     def load_celebA(self):
 
         # get the list of image path
-        return read_image_list_file(self.images_path, is_test=False)
+        return read_image_list_file(self.images_path, is_test= False, attri_id= self.attri_id)
 
     def load_test_celebA(self):
 
         # get the list of image path
-        return read_image_list_file(self.images_path, is_test=True)
+        return read_image_list_file(self.images_path, is_test= True, attri_id= self.attri_id)
 
     def getShapeForData(self, filenames):
 
@@ -131,32 +125,6 @@ class CelebA(object):
         sample_images = np.array(array)
 
         return sample_images
-
-    def getNextBatch(self, batch_num=0, batch_size=64):
-
-        ro_num = self.train_len / 64
-
-        if batch_num % ro_num == 0:
-
-            perm = np.arange(self.train_len)
-
-            np.random.shuffle(perm)
-
-            self.dom_1_train_data_list = np.array(self.dom_1_train_data_list)
-            self.dom_1_train_data_list = self.dom_1_train_data_list[perm]
-            self.dom_2_train_data_list = np.array(self.dom_2_train_data_list)
-            self.dom_2_train_data_list = self.dom_2_train_data_list[perm]
-
-            self.dom_1_train_lab_list = np.array(self.dom_1_train_lab_list)
-            self.dom_1_train_lab_list = self.dom_1_train_lab_list[perm]
-
-            self.dom_2_train_lab_list = np.array(self.dom_2_train_lab_list)
-            self.dom_2_train_lab_list = self.dom_2_train_lab_list[perm]
-
-        return self.dom_1_train_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
-               self.dom_1_train_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
-               self.dom_2_train_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
-               self.dom_2_train_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size]
 
     def getTestNextBatch(self, batch_num=0, batch_size=64):
 
@@ -174,16 +142,13 @@ class CelebA(object):
         return self.test_data_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size], \
                self.test_lab_list[(batch_num % ro_num) * batch_size: (batch_num % ro_num + 1) * batch_size]
 
-def read_image_list_file(category, is_test):
+def read_image_list_file(category, is_test, attri_id):
 
     end_num = 0
-    start_num = 1202
+    start_num = 5001
 
     dom_1_list_image = []
-    dom_1_list_label = []
-
     dom_2_list_image = []
-    dom_2_list_label = []
 
     lines = open(category + "../" + "list_attr_celeba.txt")
     li_num = 0
@@ -196,25 +161,27 @@ def read_image_list_file(category, is_test):
         if li_num >= end_num and is_test == True:
             break
 
-        flag = line.split('1 ', 41)[20]  # get the label for gender
+        flag = line.split('1 ', 41)[attri_id]  # get the label for gender
         file_name = line.split(' ', 1)[0]
 
         # print flag
         if flag == ' ':
-
             dom_1_list_image.append(category + file_name)
-            dom_1_list_label.append(1)
             
         else:
-            
             dom_2_list_image.append(category + file_name)
-            dom_2_list_label.append(0)
 
         li_num += 1
 
     lines.close()
+
     #keep the balance of the dataset.
-    return dom_1_list_image[0:80000], dom_1_list_label[0:80000], dom_2_list_image[0:80000], dom_2_list_label[0:80000]
+    if len(dom_1_list_image) > len(dom_2_list_image):
+        dom_1_list_image = dom_1_list_image[0:len(dom_2_list_image)]
+    else:
+        dom_2_list_image = dom_2_list_image[0:len(dom_1_list_image)]
+
+    return dom_1_list_image, dom_2_list_image
 
 
 

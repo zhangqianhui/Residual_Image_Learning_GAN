@@ -43,7 +43,7 @@ Man-to-Woman Face:
 
 --------------------
 
-The woman face:
+Female face:
 
 ![](imgs/wm.png)
 

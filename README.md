@@ -29,7 +29,7 @@ The training data folder should look like :
  
 ## Experiments
 
-The man face:
+Male face:
 
 ![](imgs/m.png)
 
